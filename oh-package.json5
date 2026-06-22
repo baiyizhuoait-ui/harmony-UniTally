@@ -1,0 +1,11 @@
+{
+  "modelVersion": "6.1.1",
+  "name": "unitally",
+  "version": "1.0.0",
+  "description": "UniTally - 高级多币种记账应用",
+  "main": "",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "overrides": {}
+}

@@ -1,0 +1,30 @@
+# HarmonyOS build outputs
+entry/build/
+.hvigor/cache/
+.hvigor/outputs/
+.hvigor/dependencyMap/
+entry/.preview/
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Local config (contains SDK paths)
+local.properties
+
+# Build profiles with local paths
+entry/build-profile.json5
+
+# Compiled files
+*.abc
+*.map
+
+# Project memory (development notes, not code)
+PROJECT_MEMORY.md

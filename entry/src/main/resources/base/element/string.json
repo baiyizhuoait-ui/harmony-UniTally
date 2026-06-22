@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "UniTally Entry Module"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "UniTally 主界面"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "UniTally"
+    },
+    {
+      "name": "permission_image_reason",
+      "value": "用于为交易记录添加图片凭证，如小票、发票等"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "UniTally"
+    },
+    {
+      "name": "app_desc",
+      "value": "高级多币种记账应用"
+    }
+  ]
+}
