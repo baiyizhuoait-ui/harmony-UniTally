@@ -6,7 +6,7 @@
  */
 import { UniCard } from './UniCard'
 import { UniButton, ButtonVariant, ButtonSize } from './UniButton'
-import { Category, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../model/Category'
+import { Category, getDefaultExpenseCategories, getDefaultIncomeCategories } from '../model/Category'
 import { UIStyle, PageBackgroundMap, PrimaryTextColorMap, SecondaryTextColorMap, CardBackgroundMap, CardBorderMap, RadiusMap, DividerColorMap, SecondaryBackgroundMap, PrimaryColorMap } from '../constants/UIStyleConst'
 import { getCurrentLanguage, getTranslation } from '../constants/I18n'
 
@@ -26,12 +26,12 @@ class ThemeColorOption {
 }
 
 const THEME_COLORS: ThemeColorOption[] = [
-  new ThemeColorOption('blue', '蓝色', '#3B82F6', '#60A5FA'),
-  new ThemeColorOption('rose', '玫红', '#F43F5E', '#FB7185'),
-  new ThemeColorOption('green', '绿色', '#10B981', '#34D399'),
-  new ThemeColorOption('violet', '紫色', '#8B5CF6', '#A78BFA'),
-  new ThemeColorOption('amber', '琥珀', '#F59E0B', '#FBBF24'),
-  new ThemeColorOption('teal', '青色', '#14B8A6', '#2DD4BF')
+  new ThemeColorOption('blue', 'colorBlue', '#3B82F6', '#60A5FA'),
+  new ThemeColorOption('rose', 'colorRose', '#F43F5E', '#FB7185'),
+  new ThemeColorOption('green', 'colorGreen', '#10B981', '#34D399'),
+  new ThemeColorOption('violet', 'colorViolet', '#8B5CF6', '#A78BFA'),
+  new ThemeColorOption('amber', 'colorAmber', '#F59E0B', '#FBBF24'),
+  new ThemeColorOption('teal', 'colorTeal', '#14B8A6', '#2DD4BF')
 ]
 
 // 界面风格选项
@@ -50,10 +50,10 @@ class UIStyleOption {
 }
 
 const UI_STYLE_OPTIONS: UIStyleOption[] = [
-  new UIStyleOption(UIStyle.Minimalist, '极简', '◻️', '简洁清爽，无阴影干扰'),
-  new UIStyleOption(UIStyle.Neumorphism, '新拟态', '🔲', '柔和凸起，立体触感'),
-  new UIStyleOption(UIStyle.Brutalism, '粗野主义', '🧱', '硬朗粗犷，高对比度'),
-  new UIStyleOption(UIStyle.Cyberpunk, '赛博朋克', '🌃', '霓虹渐变，未来科技')
+  new UIStyleOption(UIStyle.Minimalist, 'minimalist', '◻️', 'minimalistDesc'),
+  new UIStyleOption(UIStyle.Neumorphism, 'neumorphism', '🔲', 'neumorphismDesc'),
+  new UIStyleOption(UIStyle.Brutalism, 'brutalism', '🧱', 'brutalismDesc'),
+  new UIStyleOption(UIStyle.Cyberpunk, 'cyberpunk', '🌃', 'cyberpunkDesc')
 ]
 
 // 设置 Tab 枚举
@@ -74,16 +74,17 @@ export struct SettingsModal {
   }
 
   // 全局风格
-  @StorageProp('currentStyle') currentStyle: string = UIStyle.Minimalist
+  @StorageLink('currentStyle') currentStyle: string = UIStyle.Minimalist
   @StorageLink('currentThemeColor') currentThemeColor: string = 'blue'
   @StorageLink('currentThemeMode') currentThemeMode: string = 'light'
+  @StorageLink('language') @Watch('onLangChanged') currentLang: string = 'zh'
 
   // Tab 状态
   @State currentTab: number = SETTINGS_TAB_APPEARANCE
 
   // 分类管理状态
-  @State expenseCategories: Category[] = DEFAULT_EXPENSE_CATEGORIES.slice()
-  @State incomeCategories: Category[] = DEFAULT_INCOME_CATEGORIES.slice()
+  @State expenseCategories: Category[] = getDefaultExpenseCategories().slice()
+  @State incomeCategories: Category[] = getDefaultIncomeCategories().slice()
   @State showAddCategory: boolean = false
   @State newCategoryName: string = ''
   @State newCategoryIcon: string = '📌'
@@ -91,7 +92,7 @@ export struct SettingsModal {
   @State newCategoryType: string = 'expense'
 
   // 平台管理状态
-  @State platforms: string[] = ['支付宝', '微信', '现金', '银行卡']
+  @State platforms: string[] = []
   @State showAddPlatform: boolean = false
   @State newPlatformName: string = ''
 
@@ -109,6 +110,21 @@ export struct SettingsModal {
     '#7CB342', '#C0CA33', '#FDD835', '#FFB300', '#FB8C00',
     '#F4511E', '#6D4C41', '#757575', '#546E7A', '#607D8B'
   ]
+
+  aboutToAppear(): void {
+    this.updateDefaultPlatforms()
+  }
+
+  onLangChanged(): void {
+    this.expenseCategories = getDefaultExpenseCategories().slice()
+    this.incomeCategories = getDefaultIncomeCategories().slice()
+    this.updateDefaultPlatforms()
+  }
+
+  private updateDefaultPlatforms(): void {
+    const t = getTranslation(getCurrentLanguage())
+    this.platforms = [t.alipay, t.wechatPay, t.cashPlatform, t.bankCard]
+  }
 
   build() {
     Column() {
@@ -461,7 +477,7 @@ export struct SettingsModal {
             .fontColor(PrimaryColorMap.get(this.currentStyle) ?? '#3B82F6')
             .margin({ top: 12 })
             .onClick(() => {
-              this.platforms = ['支付宝', '微信', '现金', '银行卡']
+              this.updateDefaultPlatforms()
             })
         }
         .alignItems(HorizontalAlign.Start)
@@ -529,7 +545,7 @@ export struct SettingsModal {
             .fontColor(PrimaryColorMap.get(this.currentStyle) ?? '#3B82F6')
             .margin({ top: 8 })
             .onClick(() => {
-              this.expenseCategories = DEFAULT_EXPENSE_CATEGORIES.slice()
+              this.expenseCategories = getDefaultExpenseCategories().slice()
             })
         }
         .alignItems(HorizontalAlign.Start)
@@ -589,7 +605,7 @@ export struct SettingsModal {
             .fontColor(PrimaryColorMap.get(this.currentStyle) ?? '#3B82F6')
             .margin({ top: 8 })
             .onClick(() => {
-              this.incomeCategories = DEFAULT_INCOME_CATEGORIES.slice()
+              this.incomeCategories = getDefaultIncomeCategories().slice()
             })
         }
         .alignItems(HorizontalAlign.Start)

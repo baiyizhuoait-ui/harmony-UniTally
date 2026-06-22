@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿/**
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿/**
  * AddTransactionModal - 核心记账弹窗
  * 支持支出/收入/转账三个独立 Tab
  * 转账 Tab 实现跨币种动态表单：同币种单金额输入，跨币种双金额输入
@@ -12,8 +12,8 @@ import { UniInput } from './UniInput'
 import { Transaction, createTransactionFromJson } from '../model/Transaction'
 import { Wallet } from '../model/Wallet'
 import { Platform } from '../model/Platform'
-import { Category, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../model/Category'
-import { TransactionType, WalletType, getCurrencySymbol, CURRENCY_LIST, CurrencyInfo, WalletTypeLabel, WalletTypeIcon } from '../constants/CurrencyConst'
+import { Category, getDefaultExpenseCategories, getDefaultIncomeCategories } from '../model/Category'
+import { TransactionType, WalletType, getCurrencySymbol, getCurrencyList, CurrencyInfo, getWalletTypeLabel, WalletTypeIcon } from '../constants/CurrencyConst'
 import {
   UIStyle, PrimaryTextColorMap, SecondaryTextColorMap, PageBackgroundMap,
   ExpenseColorMap, IncomeColorMap, PrimaryColorMap,
@@ -188,7 +188,7 @@ export struct AddTransactionModal {
       case WalletType.EWallet:
         return this.getT().ewalletAccount
       default:
-        return WalletTypeLabel.get(wType) ?? ''
+        return getWalletTypeLabel(wType)
     }
   }
 
@@ -274,7 +274,7 @@ export struct AddTransactionModal {
   private formatDateTimeByTarget(target: string): string {
     const isoStr = target === 'transfer' ? this.transferDate : this.selectedDate
     if (!isoStr || isoStr === '') {
-      return '现在'
+      return this.getT().now
     }
     const date = new Date(isoStr)
     const year = date.getFullYear()
@@ -285,9 +285,9 @@ export struct AddTransactionModal {
     const today = new Date()
     if (year === today.getFullYear() && date.getMonth() === today.getMonth() &&
       date.getDate() === today.getDate()) {
-      return `今天 ${hours}:${minutes}`
+      return `${this.getT().todayTime} ${hours}:${minutes}`
     }
-    return `${month}月${day}日 ${hours}:${minutes}`
+    return `${this.getT().monthDayTime.replace('{m}', month.toString()).replace('{d}', day.toString())} ${hours}:${minutes}`
   }
 
   private showDatePicker(target: string): void {
@@ -360,7 +360,7 @@ export struct AddTransactionModal {
         }
       }
     } catch (error) {
-      console.error('图片选择失败:', error)
+      console.error('Image pick failed:', error)
       try {
         this.getUIContext().getPromptAction().showToast({ message: this.getT().addImage })
       } catch (e) {
@@ -443,11 +443,11 @@ export struct AddTransactionModal {
       // ---- 内容区域 ----
       if (this.currentTabIndex === 0) {
         Scroll() {
-          this.ExpenseIncomeForm(DEFAULT_EXPENSE_CATEGORIES, TransactionType.Expense)
+          this.ExpenseIncomeForm(getDefaultExpenseCategories(), TransactionType.Expense)
         }.scrollBar(BarState.Off).layoutWeight(1)
       } else if (this.currentTabIndex === 1) {
         Scroll() {
-          this.ExpenseIncomeForm(DEFAULT_INCOME_CATEGORIES, TransactionType.Income)
+          this.ExpenseIncomeForm(getDefaultIncomeCategories(), TransactionType.Income)
         }.scrollBar(BarState.Off).layoutWeight(1)
       } else {
         Scroll() {
@@ -537,7 +537,7 @@ export struct AddTransactionModal {
   CurrencyChips() {
     Scroll() {
       Row({ space: 6 }) {
-        ForEach(CURRENCY_LIST, (currencyInfo: CurrencyInfo) => {
+        ForEach(getCurrencyList(), (currencyInfo: CurrencyInfo) => {
           Text(currencyInfo.code)
             .fontSize(11)
             .fontWeight(this.selectedCurrency === currencyInfo.code ? FontWeight.Bold : FontWeight.Normal)

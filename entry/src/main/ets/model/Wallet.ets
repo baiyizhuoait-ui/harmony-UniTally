@@ -4,6 +4,7 @@
  * 信用卡类型 UI 层面显示"可用额度"而非"当前余额"
  */
 import { WalletType } from '../constants/CurrencyConst'
+import { getTranslation, getCurrentLanguage } from '../constants/I18n'
 
 @Observed
 export class Wallet {
@@ -88,7 +89,7 @@ export class Wallet {
 export function createDefaultCashWallet(currency: string, color: string): Wallet {
   return new Wallet(
     `wallet_${Date.now()}`,
-    '现金',
+    getTranslation(getCurrentLanguage()).defaultCash,
     color,
     '💰',
     currency,

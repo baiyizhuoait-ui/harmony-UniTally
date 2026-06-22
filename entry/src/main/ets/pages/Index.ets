@@ -8,8 +8,8 @@
  */
 import { Transaction, createTransactionFromJson } from '../model/Transaction'
 import { Wallet, createWalletFromJson } from '../model/Wallet'
-import { Category, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../model/Category'
-import { Platform, DEFAULT_PLATFORMS } from '../model/Platform'
+import { Category, getDefaultExpenseCategories, getDefaultIncomeCategories } from '../model/Category'
+import { Platform, getDefaultPlatforms } from '../model/Platform'
 import { Budget, createBudgetFromJson } from '../model/Budget'
 import { Subscription, createSubscriptionFromJson } from '../model/Subscription'
 import { TransactionType, WalletType, getCurrencySymbol, convertCurrency } from '../constants/CurrencyConst'
@@ -33,7 +33,7 @@ import { StyleHelper } from '../utils/StyleHelper'
 struct Index {
   @Provide('navStack') navStack: NavPathStack = new NavPathStack()
   @Provide('transactions') @Watch('onTransactionsChanged') transactions: Transaction[] = []
-  @Provide('wallets') @Watch('onWalletsChanged') wallets: Wallet[] = []
+  @Provide('wallets') @Watch('onWalletsChanged') wallets: Wallet[] = [] 
   @Provide('editTxId') editTxId: string = ''
   @State currentIndex: number = 0
   @State dataLoaded: boolean = false
@@ -44,6 +44,10 @@ struct Index {
   @State filterCategoryId: string = ''  // '' = 全部
   @State filterWalletId: string = ''    // '' = 全部
   @State filterPlatformId: string = ''  // '' = 全部
+  // 默认平台/分类列表（响应语言切换）
+  @State defaultPlatforms: Platform[] = getDefaultPlatforms()
+  @State defaultExpenseCategories: Category[] = getDefaultExpenseCategories()
+  @State defaultIncomeCategories: Category[] = getDefaultIncomeCategories()
   @State walletManageMode: boolean = false
   // 日历Tab状态
   @State @Watch('onCalendarMonthChanged') calendarYear: number = new Date().getFullYear()
@@ -112,6 +116,11 @@ struct Index {
 
   onLangChanged(): void {
     this.t = getTranslation(this.currentLang)
+    AppStorage.setOrCreate<string>('language', this.currentLang)
+    // 刷新默认平台/分类列表，使名称跟随语言更新
+    this.defaultPlatforms = getDefaultPlatforms()
+    this.defaultExpenseCategories = getDefaultExpenseCategories()
+    this.defaultIncomeCategories = getDefaultIncomeCategories()
     if (this.dataLoaded) {
       storageUtil.setLanguage(this.currentLang)
     }
@@ -506,7 +515,7 @@ struct Index {
           }, (wallet: Wallet) => wallet.id)
 
           // 平台筛选
-          ForEach(DEFAULT_PLATFORMS, (plat: Platform) => {
+          ForEach(this.defaultPlatforms, (plat: Platform) => {
             Text(plat.name)
               .fontSize(12).fontColor(this.filterPlatformId === plat.id ? this.sPrimaryFg() : this.sFg())
               .padding({ left: 12, right: 12, top: 6, bottom: 6 }).borderRadius(16)
@@ -1195,7 +1204,9 @@ struct Index {
                 .fontColor(cell.isToday ? this.sPrimary() : (cell.isSelected ? this.sPrimaryFg() : this.sFg()))
                 .fontWeight(cell.isToday ? FontWeight.Bold : FontWeight.Normal)
               if (cell.expense > 0) {
-                Text(cell.expense >= 10000 ? (cell.expense / 10000).toFixed(1) + '万' : cell.expense >= 1000 ? (cell.expense / 1000).toFixed(1) + 'k' : cell.expense.toFixed(0))
+                Text(this.currentLang === 'zh'
+                  ? (cell.expense >= 10000 ? (cell.expense / 10000).toFixed(1) + this.t.tenThousand : cell.expense >= 1000 ? (cell.expense / 1000).toFixed(1) + 'k' : cell.expense.toFixed(0))
+                  : (cell.expense >= 1000 ? (cell.expense / 1000).toFixed(1) + 'k' : cell.expense.toFixed(0)))
                   .fontSize(9)
                   .fontColor(cell.isSelected ? this.sPrimaryFgMuted() : this.sExpense())
                   .margin({ top: 1 })
@@ -1209,6 +1220,7 @@ struct Index {
             .onClick(() => {
               if (cell.day > 0) {
                 this.selectedDate = this.getCellDateKey(cell.day)
+                this.calendarCellsCache = this.computeCalendarCells()
               }
             })
           }, (cell: CalendarCell, index: number) => `${cell.day}_${index}`)
@@ -1377,7 +1389,7 @@ struct Index {
     const monthPrefix = `${this.calendarYear}-${String(this.calendarMonth).padStart(2, '0')}`
     for (let i = 0; i < this.transactions.length; i++) {
       const tx = this.transactions[i]
-      if (tx.type === TransactionType.Expense && this.getDateStr(tx.createdAt).indexOf(monthPrefix) === 0) {
+      if (tx.type === TransactionType.Expense && this.getDateStr(tx.datetime).indexOf(monthPrefix) === 0) {
         total += tx.amount
       }
     }
@@ -1403,7 +1415,7 @@ struct Index {
       let expense = 0
       for (let i = 0; i < this.transactions.length; i++) {
         const tx = this.transactions[i]
-        if (tx.type === TransactionType.Expense && this.getDateStr(tx.createdAt) === dateKey) {
+        if (tx.type === TransactionType.Expense && this.getDateStr(tx.datetime) === dateKey) {
           expense += tx.amount
         }
       }
@@ -1427,7 +1439,7 @@ struct Index {
     const result: Transaction[] = []
     for (let i = 0; i < this.transactions.length; i++) {
       const tx = this.transactions[i]
-      if (this.getDateStr(tx.createdAt) === this.selectedDate) {
+      if (this.getDateStr(tx.datetime) === this.selectedDate) {
         result.push(tx)
       }
     }
@@ -1443,7 +1455,7 @@ struct Index {
     for (let i = 0; i < this.transactions.length; i++) {
       const tx = this.transactions[i]
       if (tx.type !== TransactionType.Expense) { continue }
-      if (this.getDateStr(tx.createdAt).indexOf(monthPrefix) !== 0) { continue }
+      if (this.getDateStr(tx.datetime).indexOf(monthPrefix) !== 0) { continue }
       const existing = map.get(tx.category)
       map.set(tx.category, (existing !== undefined && existing !== null ? existing : 0) + tx.amount)
     }
@@ -1458,10 +1470,11 @@ struct Index {
       if (val === undefined || val === null || val <= 0) { continue }
       let name = this.t.other
       let color = StyleHelper.sFgMuted(this.currentUIStyle)
-      for (let j = 0; j < DEFAULT_EXPENSE_CATEGORIES.length; j++) {
-        if (DEFAULT_EXPENSE_CATEGORIES[j].id === catId) {
-          name = DEFAULT_EXPENSE_CATEGORIES[j].name
-          color = DEFAULT_EXPENSE_CATEGORIES[j].color
+      const expCats = this.defaultExpenseCategories
+      for (let j = 0; j < expCats.length; j++) {
+        if (expCats[j].id === catId) {
+          name = expCats[j].name
+          color = expCats[j].color
           break
         }
       }
@@ -1485,7 +1498,7 @@ struct Index {
     for (let i = 0; i < this.transactions.length; i++) {
       const tx = this.transactions[i]
       if (tx.type !== TransactionType.Expense) { continue }
-      const dateStr = this.getDateStr(tx.createdAt)
+      const dateStr = this.getDateStr(tx.datetime)
       if (dateStr.indexOf(monthPrefix) !== 0) { continue }
       const day = parseInt(dateStr.substring(8, 10), 10)
       const existing = dailyMap.get(day)
@@ -1564,7 +1577,7 @@ struct Index {
 
     for (let i = 0; i < filtered.length; i++) {
       const tx = filtered[i]
-      const dateKey = this.getDateStr(tx.createdAt)
+      const dateKey = this.getDateStr(tx.datetime)
       let group = map.get(dateKey)
       if (!group) {
         let label = dateKey
@@ -1589,7 +1602,7 @@ struct Index {
     return result
   }
 
-  private getDateStr(timestamp: number): string {
+  private getDateStr(timestamp: number | string): string {
     const d = new Date(timestamp)
     const y = d.getFullYear()
     const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -1603,7 +1616,7 @@ struct Index {
       usedIds.set(this.transactions[i].category, true)
     }
     const result: Category[] = []
-    const allCats = DEFAULT_EXPENSE_CATEGORIES.concat(DEFAULT_INCOME_CATEGORIES)
+    const allCats = this.defaultExpenseCategories.concat(this.defaultIncomeCategories)
     for (let i = 0; i < allCats.length; i++) {
       if (usedIds.has(allCats[i].id)) { result.push(allCats[i]) }
     }
@@ -1700,7 +1713,7 @@ struct Index {
       const tx = this.transactions[i]
       if (tx.type !== TransactionType.Expense) { continue }
       if (tx.category !== budget.category) { continue }
-      const txDate = this.getDateStr(tx.createdAt)
+      const txDate = this.getDateStr(tx.datetime)
       if (dateRange.start !== '' && txDate < dateRange.start) { continue }
       if (dateRange.end !== '' && txDate > dateRange.end) { continue }
       spent += tx.amount
@@ -1808,7 +1821,7 @@ struct Index {
 
   private getCategoryIcon(tx: Transaction): string {
     if (tx.type === TransactionType.Transfer) { return '🔄' }
-    const categories = tx.type === TransactionType.Expense ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_INCOME_CATEGORIES
+    const categories = tx.type === TransactionType.Expense ? this.defaultExpenseCategories : this.defaultIncomeCategories
     for (let i = 0; i < categories.length; i++) {
       if (categories[i].id === tx.category) { return categories[i].icon }
     }
@@ -1821,7 +1834,7 @@ struct Index {
       const toName = this.getWalletNameById(tx.toWalletId)
       return `${fromName} → ${toName}`
     }
-    const categories = tx.type === TransactionType.Expense ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_INCOME_CATEGORIES
+    const categories = tx.type === TransactionType.Expense ? this.defaultExpenseCategories : this.defaultIncomeCategories
     for (let i = 0; i < categories.length; i++) {
       if (categories[i].id === tx.category) { return categories[i].name }
     }
@@ -1830,7 +1843,7 @@ struct Index {
 
   private getCategoryBgColor(tx: Transaction): string {
     if (tx.type === TransactionType.Transfer) { return StyleHelper.sPrimaryBg(this.currentUIStyle) }
-    const categories = tx.type === TransactionType.Expense ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_INCOME_CATEGORIES
+    const categories = tx.type === TransactionType.Expense ? this.defaultExpenseCategories : this.defaultIncomeCategories
     for (let i = 0; i < categories.length; i++) {
       if (categories[i].id === tx.category) {
         const hex = categories[i].color
@@ -1895,7 +1908,7 @@ struct Index {
       const catId = tx.category
       const existing = map.get(catId)
       if (!existing) {
-        const categories = DEFAULT_EXPENSE_CATEGORIES
+        const categories = this.defaultExpenseCategories
         let icon = '📌'
         let name = this.t.other
         for (let j = 0; j < categories.length; j++) {
@@ -1926,16 +1939,16 @@ struct Index {
   // ==================== 数据初始化 ====================
   private initMockData(): void {
     this.wallets = [
-      new Wallet('w1', '现金', '#E53935', '💰', 'CNY', 5280, WalletType.Cash, 0),
-      new Wallet('w2', '储蓄卡', '#43A047', '🏦', 'CNY', 25000, WalletType.Savings, 1),
-      new Wallet('w3', '信用卡', '#1E88E5', '💳', 'CNY', -1200, WalletType.Credit, 2),
+      new Wallet('w1', this.t.defaultCash, '#E53935', '💰', 'CNY', 5280, WalletType.Cash, 0),
+      new Wallet('w2', this.t.defaultSavings, '#43A047', '🏦', 'CNY', 25000, WalletType.Savings, 1),
+      new Wallet('w3', this.t.defaultCredit, '#1E88E5', '💳', 'CNY', -1200, WalletType.Credit, 2),
     ]
     const now = Date.now()
     this.transactions = [
-      new Transaction('t1', TransactionType.Expense, 35, 'CNY', '', 'w1', 'cat_food', new Date(now).toISOString(), '午餐', now - 3600000),
-      new Transaction('t2', TransactionType.Expense, 128, 'CNY', '', 'w2', 'cat_shopping', new Date(now - 86400000).toISOString(), '日用品', now - 86400000),
-      new Transaction('t3', TransactionType.Income, 15000, 'CNY', '', 'w2', 'cat_salary', new Date(now - 86400000 * 2).toISOString(), '月薪', now - 86400000 * 2),
-      new Transaction('t4', TransactionType.Expense, 45, 'CNY', '', 'w1', 'cat_transport', new Date(now - 86400000 * 3).toISOString(), '打车', now - 86400000 * 3),
+      new Transaction('t1', TransactionType.Expense, 35, 'CNY', '', 'w1', 'cat_food', new Date(now).toISOString(), this.t.defaultLunch, now - 3600000),
+      new Transaction('t2', TransactionType.Expense, 128, 'CNY', '', 'w2', 'cat_shopping', new Date(now - 86400000).toISOString(), this.t.defaultDaily, now - 86400000),
+      new Transaction('t3', TransactionType.Income, 15000, 'CNY', '', 'w2', 'cat_salary', new Date(now - 86400000 * 2).toISOString(), this.t.defaultSalary, now - 86400000 * 2),
+      new Transaction('t4', TransactionType.Expense, 45, 'CNY', '', 'w1', 'cat_transport', new Date(now - 86400000 * 3).toISOString(), this.t.defaultTaxi, now - 86400000 * 3),
     ]
     // 首次初始化后手动保存（此时 dataLoaded 还为 false，@Watch 不会触发）
     this.saveTransactions()
@@ -2358,8 +2371,9 @@ struct EditRecordPage {
                 })
               }
             }
+            }
 
-            // 保存按钮
+            // 保存按钮（转账和支出/收入共用）
             Button(this.editTxId !== '' ? this.t.save : this.t.addTransaction)
               .width('100%')
               .height(44)
@@ -2369,7 +2383,6 @@ struct EditRecordPage {
               .borderRadius(12)
               .margin({ top: 10, bottom: 20 })
               .onClick(() => { this.onSave() })
-            }
           }
           .padding({ left: 20, right: 20, top: 20 })
         }
@@ -2425,7 +2438,7 @@ struct EditRecordPage {
   // ==================== 表单方法 ====================
 
   private getCategoriesForType(): Category[] {
-    return this.formType === TransactionType.Expense ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_INCOME_CATEGORIES
+    return this.formType === TransactionType.Expense ? this.defaultExpenseCategories : this.defaultIncomeCategories
   }
 
   private onSave(): void {
@@ -2922,7 +2935,7 @@ struct EditBudgetPage {
 
             Text(this.t.selectCategoryLabel).fontSize(16).fontColor(StyleHelper.sFg(this.currentUIStyle)).width('100%')
             Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
-              ForEach(DEFAULT_EXPENSE_CATEGORIES, (cat: Category) => {
+              ForEach(this.defaultExpenseCategories, (cat: Category) => {
                 Column() {
                   Text(cat.icon).fontSize(20)
                   Text(cat.name).fontSize(10).fontColor(this.formCategoryId === cat.id ? StyleHelper.sPrimary(this.themeColor) : StyleHelper.sFgMuted(this.currentUIStyle)).margin({ top: 2 })

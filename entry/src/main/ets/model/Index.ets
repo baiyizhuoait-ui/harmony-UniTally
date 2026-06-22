@@ -1,10 +1,10 @@
 /**
- * 数据模型统一导出
+ * Data model unified exports
  */
 export { Transaction, createTransactionFromJson } from './Transaction'
 export { Wallet, createWalletFromJson, createDefaultCashWallet } from './Wallet'
-export { Category, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES, createCategoryFromJson } from './Category'
+export { Category, getDefaultExpenseCategories, getDefaultIncomeCategories, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES, createCategoryFromJson } from './Category'
 export { Budget, createBudgetFromJson } from './Budget'
-export { Subscription, SUBSCRIPTION_ICONS, SubscriptionIconInfo, DEFAULT_SUBSCRIPTION_ICONS, createSubscriptionFromJson } from './Subscription'
+export { Subscription, getSubscriptionIcons, SUBSCRIPTION_ICONS, SubscriptionIconInfo, DEFAULT_SUBSCRIPTION_ICONS, createSubscriptionFromJson } from './Subscription'
 export { ExchangeRateCache, createExchangeRateCacheFromJsonString } from './ExchangeRateCache'
-export { Platform, DEFAULT_PLATFORMS, createPlatformFromJson } from './Platform'
+export { Platform, getDefaultPlatforms, DEFAULT_PLATFORMS, createPlatformFromJson } from './Platform'

@@ -3,6 +3,7 @@
  * 用于管理周期性订阅服务（如 Netflix、Spotify 等）
  * 包含提供商、金额、图标、日期范围和提醒设置
  */
+import { getTranslation, getCurrentLanguage } from '../constants/I18n'
 @Observed
 export class Subscription {
   id: string = ''
@@ -158,22 +159,50 @@ export class SubscriptionIconInfo {
     this.color = color
     this.order = order
   }
+
+  static getLocalizedName(key: string): string {
+    const t = getTranslation(getCurrentLanguage())
+    const nameMap: Map<string, string> = new Map([
+      ['food', t.subFood],
+      ['transport', t.subTransport],
+      ['shopping', t.subShopping],
+      ['housing', t.subHousing],
+      ['entertainment', t.subEntertainment],
+      ['medical', t.subMedical],
+      ['education', t.subEducation],
+      ['grocery', t.subGrocery],
+      ['drink', t.subDrink],
+      ['fitness', t.subFitness],
+      ['gift', t.subGift],
+      ['telecom', t.subTelecom],
+      ['clothing', t.subClothing],
+      ['social', t.subSocial],
+      ['other', t.subOther]
+    ])
+    return nameMap.get(key) ?? key
+  }
 }
 
-export const SUBSCRIPTION_ICONS: SubscriptionIconInfo[] = [
-  new SubscriptionIconInfo('food', '餐饮', '🍜', '#f97316', 0),
-  new SubscriptionIconInfo('transport', '交通', '🚗', '#3b82f6', 1),
-  new SubscriptionIconInfo('shopping', '购物', '🛍️', '#ec4899', 2),
-  new SubscriptionIconInfo('housing', '住房', '🏠', '#8b5cf6', 3),
-  new SubscriptionIconInfo('entertainment', '娱乐', '🎮', '#06b6d4', 4),
-  new SubscriptionIconInfo('medical', '医疗', '🏥', '#ef4444', 5),
-  new SubscriptionIconInfo('education', '教育', '📚', '#14b8a6', 6),
-  new SubscriptionIconInfo('grocery', '日用', '🧴', '#a3e635', 7),
-  new SubscriptionIconInfo('drink', '饮料', '🧋', '#10b981', 8),
-  new SubscriptionIconInfo('fitness', '健身', '💪', '#f59e0b', 9),
-  new SubscriptionIconInfo('gift', '礼品', '🎁', '#ec4899', 10),
-  new SubscriptionIconInfo('telecom', '通讯', '📱', '#6366f1', 11),
-  new SubscriptionIconInfo('clothing', '服饰', '👗', '#f43f5e', 12),
-  new SubscriptionIconInfo('social', '社交', '🍻', '#fbbf24', 13),
-  new SubscriptionIconInfo('other', '其他', '📦', '#78716c', 14)
-]
+// Get subscription icons with localized names (called at display time)
+export function getSubscriptionIcons(): SubscriptionIconInfo[] {
+  return [
+    new SubscriptionIconInfo('food', SubscriptionIconInfo.getLocalizedName('food'), '🍜', '#f97316', 0),
+    new SubscriptionIconInfo('transport', SubscriptionIconInfo.getLocalizedName('transport'), '🚗', '#3b82f6', 1),
+    new SubscriptionIconInfo('shopping', SubscriptionIconInfo.getLocalizedName('shopping'), '🛍️', '#ec4899', 2),
+    new SubscriptionIconInfo('housing', SubscriptionIconInfo.getLocalizedName('housing'), '🏠', '#8b5cf6', 3),
+    new SubscriptionIconInfo('entertainment', SubscriptionIconInfo.getLocalizedName('entertainment'), '🎮', '#06b6d4', 4),
+    new SubscriptionIconInfo('medical', SubscriptionIconInfo.getLocalizedName('medical'), '🏥', '#ef4444', 5),
+    new SubscriptionIconInfo('education', SubscriptionIconInfo.getLocalizedName('education'), '📚', '#14b8a6', 6),
+    new SubscriptionIconInfo('grocery', SubscriptionIconInfo.getLocalizedName('grocery'), '🧴', '#a3e635', 7),
+    new SubscriptionIconInfo('drink', SubscriptionIconInfo.getLocalizedName('drink'), '🧋', '#10b981', 8),
+    new SubscriptionIconInfo('fitness', SubscriptionIconInfo.getLocalizedName('fitness'), '💪', '#f59e0b', 9),
+    new SubscriptionIconInfo('gift', SubscriptionIconInfo.getLocalizedName('gift'), '🎁', '#ec4899', 10),
+    new SubscriptionIconInfo('telecom', SubscriptionIconInfo.getLocalizedName('telecom'), '📱', '#6366f1', 11),
+    new SubscriptionIconInfo('clothing', SubscriptionIconInfo.getLocalizedName('clothing'), '👗', '#f43f5e', 12),
+    new SubscriptionIconInfo('social', SubscriptionIconInfo.getLocalizedName('social'), '🍻', '#fbbf24', 13),
+    new SubscriptionIconInfo('other', SubscriptionIconInfo.getLocalizedName('other'), '📦', '#78716c', 14)
+  ]
+}
+
+// Legacy static array for backward compatibility
+export const SUBSCRIPTION_ICONS: SubscriptionIconInfo[] = getSubscriptionIcons()

@@ -5,6 +5,7 @@
  */
 import photoAccessHelper from '@ohos.file.photoAccessHelper'
 import { promptAction } from '@kit.ArkUI'
+import { getTranslation, getCurrentLanguage } from '../constants/I18n'
 
 class PhotoPickerUtil {
   // 是否支持图片选择（预览器环境不支持）
@@ -16,7 +17,7 @@ class PhotoPickerUtil {
    */
   async pickSingleImage(): Promise<string> {
     if (!this.isSupported) {
-      console.warn('[PhotoPickerUtil] 图片选择在当前环境不支持')
+      console.warn('[PhotoPickerUtil] Image picker not supported in current environment')
       return ''
     }
 
@@ -37,15 +38,15 @@ class PhotoPickerUtil {
       const errMsg = String(error)
       if (errMsg.includes('not support') || errMsg.includes('undefined') || errMsg.includes('null')) {
         this.isSupported = false
-        console.warn('[PhotoPickerUtil] 检测到当前环境不支持图片选择API')
+        console.warn('[PhotoPickerUtil] Image picker API not supported in current environment')
         try {
-          promptAction.showToast({ message: '预览器不支持图片选择功能' })
+          promptAction.showToast({ message: getTranslation(getCurrentLanguage()).pickerNotSupported })
         } catch (e) {
           // ignore
         }
         return ''
       }
-      console.error('[PhotoPickerUtil] 图片选择失败:', error)
+      console.error('[PhotoPickerUtil] Image pick failed:', error)
       return ''
     }
   }

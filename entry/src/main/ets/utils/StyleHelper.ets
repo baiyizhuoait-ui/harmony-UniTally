@@ -4,6 +4,7 @@
  */
 import {
   UIStyle,
+  PageBackgroundMap,
   PrimaryTextColorMap, SecondaryTextColorMap,
   CardBackgroundMap, CardBorderMap, RadiusMap, PrimaryColorMap,
   IncomeColorMap, ExpenseColorMap, SecondaryBackgroundMap,
@@ -24,7 +25,7 @@ export interface CardShadowConfig {
 }
 
 export class StyleHelper {
-  static sPageBg(style: string): string { return '#F1F3F5' }
+  static sPageBg(style: string): string { return PageBackgroundMap.get(style) ?? '#F1F3F5' }
   static sFg(style: string): string { return PrimaryTextColorMap.get(style) ?? '#1A1A1A' }
   static sFgMuted(style: string): string { return SecondaryTextColorMap.get(style) ?? '#737373' }
   static sCardBg(style: string): string { return CardBackgroundMap.get(style) ?? '#FFFFFF' }

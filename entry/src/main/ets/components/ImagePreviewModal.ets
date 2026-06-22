@@ -3,10 +3,16 @@
  * 支持全屏预览图片，支持缩放和关闭
  */
 import { UIStyle, PrimaryTextColorMap, SecondaryTextColorMap, PageBackgroundMap } from '../constants/UIStyleConst'
+import { getTranslation, getCurrentLanguage } from '../constants/I18n'
 
 @CustomDialog
 export struct ImagePreviewModal {
   controller: CustomDialogController
+
+  // i18n
+  private getT() {
+    return getTranslation(getCurrentLanguage())
+  }
 
   // ==================== 全局风格监听 ====================
   @StorageProp('currentStyle') currentStyle: string = UIStyle.Minimalist
@@ -53,7 +59,7 @@ export struct ImagePreviewModal {
                 })
             )
         } else {
-          Text('无图片')
+          Text(this.getT().noImage)
             .fontSize(16)
             .fontColor(Color.White)
         }
@@ -62,7 +68,7 @@ export struct ImagePreviewModal {
       .justifyContent(FlexAlign.Center)
 
       // ---- 底部提示 ----
-      Text('双指缩放 | 点击关闭')
+      Text(this.getT().zoomTip)
         .fontSize(12)
         .fontColor('#FFFFFFAA')
         .margin({ bottom: 20 })
