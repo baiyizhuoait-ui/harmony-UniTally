@@ -56,7 +56,6 @@ struct Index {
   // ===== 日期范围筛选（自旧版 ExpenseCalendar 移植）=====
   @State filterStartDate: string = ''
   @State filterEndDate: string = ''
-  @State showDateFilterModal: boolean = false
   @State tempStartDate: string = ''
   @State tempEndDate: string = ''
   @Provide('editWalletId') editWalletId: string = ''
@@ -406,6 +405,8 @@ struct Index {
       EditSubscriptionPage()
     } else if (name === 'Settings') {
       SettingsPage()
+    } else if (name === 'DateFilter') {
+      DateFilterPage()
     }
   }
 
@@ -1182,7 +1183,7 @@ struct Index {
       .onClick(() => {
         this.tempStartDate = this.filterStartDate
         this.tempEndDate = this.filterEndDate
-        this.showDateFilterModal = true
+        this.navStack.pushPathByName('DateFilter', '')
       })
 
       // 月度总支出
@@ -1386,11 +1387,6 @@ struct Index {
     .width('100%')
     .height('100%')
     .scrollBar(BarState.Auto)
-    .bindSheet($$this.showDateFilterModal, this.DateFilterSheetContent(), {
-      height: SheetSize.MEDIUM,
-      showClose: true,
-      backgroundColor: this.sCardBg()
-    })
   }
 
   // ==================== 日历Tab辅助方法 ====================
@@ -1669,23 +1665,23 @@ struct Index {
     return `${this.calendarYear}${this.t.yearSuffix}${this.calendarMonth}${this.t.monthSuffix}`
   }
 
-  /** 应用临时选择为正式筛选条件 */
+  /** 应用临时选择为正式筛选条件，然后返回上一页 */
   private applyDateFilter(): void {
     this.filterStartDate = this.tempStartDate
     this.filterEndDate = this.tempEndDate
-    this.showDateFilterModal = false
+    this.navStack.pop()
   }
 
-  /** 日期范围筛选弹窗（bindSheet，避免 CustomDialogController 阻塞主线程） */
+  /** 日期范围筛选页（navStack 路由，与本页其余编辑页同构） */
   @Builder
-  DateFilterSheetContent() {
+  DateFilterPage() {
     Column() {
       // 标题栏：取消 / 标题 / 确认
       Row() {
         Text(this.t.cancel)
           .fontSize(14)
           .fontColor(this.sFgMuted())
-          .onClick(() => { this.showDateFilterModal = false })
+          .onClick(() => { this.navStack.pop() })
 
         Blank()
 
@@ -1809,6 +1805,8 @@ struct Index {
       .padding(16)
     }
     .width('100%')
+    .height('100%')
+    .backgroundColor(this.sCardBg())
   }
 
   private getUsedCategories(): Category[] {
