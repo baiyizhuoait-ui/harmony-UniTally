@@ -53,6 +53,12 @@ struct Index {
   @State @Watch('onCalendarMonthChanged') calendarYear: number = new Date().getFullYear()
   @State @Watch('onCalendarMonthChanged') calendarMonth: number = new Date().getMonth() + 1
   @State selectedDate: string = ''
+  // ===== 日期范围筛选（自旧版 ExpenseCalendar 移植）=====
+  @State filterStartDate: string = ''
+  @State filterEndDate: string = ''
+  @State showDateFilterModal: boolean = false
+  @State tempStartDate: string = ''
+  @State tempEndDate: string = ''
   @Provide('editWalletId') editWalletId: string = ''
   @Provide('budgets') @Watch('onBudgetsChanged') budgets: Budget[] = []
   @Provide('subscriptions') @Watch('onSubscriptionsChanged') subscriptions: Subscription[] = []
@@ -1158,6 +1164,27 @@ struct Index {
       .width('100%')
       .padding({ left: 16, right: 16, bottom: 8 })
 
+      // 日期范围筛选入口（自旧版 ExpenseCalendar 移植）
+      Row() {
+        Text(this.getDateFilterLabel())
+          .fontSize(12)
+          .fontColor(this.sFg())
+          .maxLines(1)
+          .layoutWeight(1)
+        Text('📅')
+          .fontSize(16)
+      }
+      .width('100%')
+      .padding({ left: 10, right: 10, top: 7, bottom: 7 })
+      .borderRadius(this.sRadius())
+      .backgroundColor(this.sSecondaryBg())
+      .margin({ left: 16, right: 16, bottom: 8 })
+      .onClick(() => {
+        this.tempStartDate = this.filterStartDate
+        this.tempEndDate = this.filterEndDate
+        this.showDateFilterModal = true
+      })
+
       // 月度总支出
       Column() {
         Text(this.t.monthTotalExpense)
@@ -1359,6 +1386,11 @@ struct Index {
     .width('100%')
     .height('100%')
     .scrollBar(BarState.Auto)
+    .bindSheet($$this.showDateFilterModal, this.DateFilterSheetContent(), {
+      height: SheetSize.MEDIUM,
+      showClose: true,
+      backgroundColor: this.sCardBg()
+    })
   }
 
   // ==================== 日历Tab辅助方法 ====================
@@ -1551,6 +1583,17 @@ struct Index {
       }
       result = filtered
     }
+    // 日期范围筛选（自旧版 ExpenseCalendar 移植）
+    if (this.filterStartDate !== '' || this.filterEndDate !== '') {
+      const filtered: Transaction[] = []
+      for (let i = 0; i < result.length; i++) {
+        const day = this.getDateStr(result[i].datetime)
+        if (this.filterStartDate !== '' && day < this.filterStartDate) { continue }
+        if (this.filterEndDate !== '' && day > this.filterEndDate) { continue }
+        filtered.push(result[i])
+      }
+      result = filtered
+    }
     // 搜索
     if (this.searchKeyword !== '') {
       const kw = this.searchKeyword.toLowerCase()
@@ -1608,6 +1651,164 @@ struct Index {
     const m = String(d.getMonth() + 1).padStart(2, '0')
     const day = String(d.getDate()).padStart(2, '0')
     return `${y}-${m}-${day}`
+  }
+
+  // ===== 日期范围筛选（自旧版 ExpenseCalendar 移植）=====
+
+  /** 当前筛选区间的可读标签，未筛选时回落到当前年月 */
+  private getDateFilterLabel(): string {
+    if (this.filterStartDate && this.filterEndDate) {
+      return `${this.filterStartDate} ~ ${this.filterEndDate}`
+    }
+    if (this.filterStartDate) {
+      return `${this.filterStartDate} ~ ${this.t.monthSuffix}`
+    }
+    if (this.filterEndDate) {
+      return `${this.t.yearSuffix} ~ ${this.filterEndDate}`
+    }
+    return `${this.calendarYear}${this.t.yearSuffix}${this.calendarMonth}${this.t.monthSuffix}`
+  }
+
+  /** 应用临时选择为正式筛选条件 */
+  private applyDateFilter(): void {
+    this.filterStartDate = this.tempStartDate
+    this.filterEndDate = this.tempEndDate
+    this.showDateFilterModal = false
+  }
+
+  /** 日期范围筛选弹窗（bindSheet，避免 CustomDialogController 阻塞主线程） */
+  @Builder
+  DateFilterSheetContent() {
+    Column() {
+      // 标题栏：取消 / 标题 / 确认
+      Row() {
+        Text(this.t.cancel)
+          .fontSize(14)
+          .fontColor(this.sFgMuted())
+          .onClick(() => { this.showDateFilterModal = false })
+
+        Blank()
+
+        Text(this.t.selectTimeRange)
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.sFg())
+
+        Blank()
+
+        Text(this.t.confirm)
+          .fontSize(14)
+          .fontColor(this.sPrimary())
+          .onClick(() => { this.applyDateFilter() })
+      }
+      .width('100%')
+      .padding({ left: 16, right: 16, top: 16, bottom: 12 })
+
+      Column({ space: 16 }) {
+        // 起始日期
+        Column() {
+          Text(this.t.startDate)
+            .fontSize(12)
+            .fontColor(this.sFgMuted())
+            .margin({ bottom: 8 })
+
+          Row() {
+            Text(this.tempStartDate || this.t.selectStartDate)
+              .fontSize(14)
+              .fontColor(this.sFg())
+              .layoutWeight(1)
+            Text('📅').fontSize(18)
+          }
+          .width('100%')
+          .padding({ left: 12, right: 12, top: 10, bottom: 10 })
+          .borderRadius(this.sRadius())
+          .backgroundColor(this.sSecondaryBg())
+          .onClick(() => {
+            this.getUIContext().showDatePickerDialog({
+              selected: this.tempStartDate ? new Date(this.tempStartDate) : new Date(),
+              onAccept: (value: DatePickerResult) => {
+                const d = new Date(value.year ?? 0, (value.month ?? 1) - 1, value.day ?? 1)
+                this.tempStartDate = this.getDateStr(d.getTime())
+              }
+            })
+          })
+        }
+        .alignItems(HorizontalAlign.Start)
+
+        // 终止日期
+        Column() {
+          Text(this.t.endDate)
+            .fontSize(12)
+            .fontColor(this.sFgMuted())
+            .margin({ bottom: 8 })
+
+          Row() {
+            Text(this.tempEndDate || this.t.selectEndDate)
+              .fontSize(14)
+              .fontColor(this.sFg())
+              .layoutWeight(1)
+            Text('📅').fontSize(18)
+          }
+          .width('100%')
+          .padding({ left: 12, right: 12, top: 10, bottom: 10 })
+          .borderRadius(this.sRadius())
+          .backgroundColor(this.sSecondaryBg())
+          .onClick(() => {
+            this.getUIContext().showDatePickerDialog({
+              selected: this.tempEndDate ? new Date(this.tempEndDate) : new Date(),
+              onAccept: (value: DatePickerResult) => {
+                const d = new Date(value.year ?? 0, (value.month ?? 1) - 1, value.day ?? 1)
+                this.tempEndDate = this.getDateStr(d.getTime())
+              }
+            })
+          })
+        }
+        .alignItems(HorizontalAlign.Start)
+
+        // 快捷按钮
+        Row({ space: 8 }) {
+          Text(this.t.clear)
+            .fontSize(13)
+            .fontColor(this.sFgMuted())
+            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+            .borderRadius(this.sRadius())
+            .backgroundColor(this.sSecondaryBg())
+            .onClick(() => {
+              this.tempStartDate = ''
+              this.tempEndDate = ''
+            })
+
+          Text(this.t.thisMonth)
+            .fontSize(13)
+            .fontColor(this.sFg())
+            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+            .borderRadius(this.sRadius())
+            .backgroundColor(this.sSecondaryBg())
+            .onClick(() => {
+              const today = new Date()
+              this.tempStartDate = this.getDateStr(new Date(today.getFullYear(), today.getMonth(), 1).getTime())
+              this.tempEndDate = this.getDateStr(today.getTime())
+            })
+
+          Text(this.t.lastMonth)
+            .fontSize(13)
+            .fontColor(this.sFg())
+            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+            .borderRadius(this.sRadius())
+            .backgroundColor(this.sSecondaryBg())
+            .onClick(() => {
+              const today = new Date()
+              const firstOfLast = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+              const endOfLast = new Date(today.getFullYear(), today.getMonth(), 0)
+              this.tempStartDate = this.getDateStr(firstOfLast.getTime())
+              this.tempEndDate = this.getDateStr(endOfLast.getTime())
+            })
+        }
+        .width('100%')
+      }
+      .padding(16)
+    }
+    .width('100%')
   }
 
   private getUsedCategories(): Category[] {
