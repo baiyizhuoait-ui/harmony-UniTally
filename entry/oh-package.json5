@@ -1,0 +1,10 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "UniTally Entry Module",
+  "main": "",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+  }
+}

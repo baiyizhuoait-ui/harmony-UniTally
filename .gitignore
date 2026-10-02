@@ -1,0 +1,32 @@
+# HarmonyOS build outputs
+# NOTE: ignore the whole .hvigor/ dir (cache/, outputs/, dependencyMap/, report/).
+# UniTallycodeing tracks its 10 report/*.json build logs by mistake - do not repeat that.
+.hvigor/
+entry/build/
+entry/.preview/
+.appanalyzer/
+
+# IDE
+.idea/
+*.iml
+.appanalyzer/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Local config (contains SDK paths)
+local.properties
+
+# Build profiles with local paths
+entry/build-profile.json5
+
+# Compiled files
+*.abc
+*.map
+
+# Project memory (development notes, not code)
+PROJECT_MEMORY.md

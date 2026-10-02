@@ -1,0 +1,27 @@
+{
+  "name": "exchange-rate-function",
+  "version": "1.0.0",
+  "description": "AGC Cloud Function: 定时拉取汇率数据并写入 Cloud DB",
+  "main": "index.ts",
+  "dependencies": {
+    "@agconnect/database-server": "^1.0.0"
+  },
+  "agcFunctionConfig": {
+    "handler": "index.handler",
+    "runtime": "Node.js18",
+    "memory": 256,
+    "timeout": 30,
+    "triggers": [
+      {
+        "type": "timer",
+        "properties": {
+          "cron": "0 8 * * *",
+          "enable": true
+        }
+      }
+    ],
+    "envVars": {
+      "EXCHANGE_RATE_API_KEY": ""
+    }
+  }
+}

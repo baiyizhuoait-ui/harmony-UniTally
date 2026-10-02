@@ -1,0 +1,28 @@
+{
+  "name": "send-verify-code",
+  "version": "1.0.0",
+  "description": "AGC Cloud Function: 邮箱验证码发送与校验（备用方案）",
+  "main": "index.ts",
+  "dependencies": {
+    "@agconnect/database-server": "^1.0.0",
+    "node-fetch": "^3.3.0"
+  },
+  "agcFunctionConfig": {
+    "handler": "index.handler",
+    "runtime": "Node.js18",
+    "memory": 256,
+    "timeout": 15,
+    "triggers": [
+      {
+        "type": "http",
+        "properties": {
+          "methods": ["POST"],
+          "enable": true
+        }
+      }
+    ],
+    "envVars": {
+      "RESEND_API_KEY": ""
+    }
+  }
+}
