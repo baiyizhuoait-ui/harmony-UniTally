@@ -39,11 +39,13 @@ struct Index {
   @State dataLoaded: boolean = false
   @State fabScale: number = 1.0
   // 明细Tab筛选状态
-  @State searchKeyword: string = ''
-  @State filterType: string = ''        // '' | 'expense' | 'income' | 'transfer'
-  @State filterCategoryId: string = ''  // '' = 全部
-  @State filterWalletId: string = ''    // '' = 全部
-  @State filterPlatformId: string = ''  // '' = 全部
+  // 5 个明细侧筛选均为日历月度缓存的依赖（缓存经 getFilteredTransactions() 取数），
+  // 故任一变化都必须重建缓存，否则切到日历Tab会看到过期图表。
+  @State @Watch('onSearchKeywordChanged') searchKeyword: string = ''
+  @State @Watch('onFilterCriteriaChanged') filterType: string = ''        // '' | 'expense' | 'income' | 'transfer'
+  @State @Watch('onFilterCriteriaChanged') filterCategoryId: string = ''  // '' = 全部
+  @State @Watch('onFilterCriteriaChanged') filterWalletId: string = ''    // '' = 全部
+  @State @Watch('onFilterCriteriaChanged') filterPlatformId: string = ''  // '' = 全部
   // 默认平台/分类列表（响应语言切换）
   @State defaultPlatforms: Platform[] = getDefaultPlatforms()
   @State defaultExpenseCategories: Category[] = getDefaultExpenseCategories()
@@ -54,10 +56,16 @@ struct Index {
   @State @Watch('onCalendarMonthChanged') calendarMonth: number = new Date().getMonth() + 1
   @State selectedDate: string = ''
   // ===== 日期范围筛选（自旧版 ExpenseCalendar 移植）=====
-  @State filterStartDate: string = ''
-  @State filterEndDate: string = ''
+  // 这两个同样是日历月度缓存的依赖，变化后必须重建缓存。
+  // 变更入口只有 applyDateFilter()，由 dateFilterApplying 合并为一次重建。
+  @State @Watch('onFilterCriteriaChanged') filterStartDate: string = ''
+  @State @Watch('onFilterCriteriaChanged') filterEndDate: string = ''
   @State tempStartDate: string = ''
   @State tempEndDate: string = ''
+  // 搜索防抖定时器句柄（非响应式，仅用于合并逐字符输入）
+  private searchDebounceTimer: number = -1
+  // applyDateFilter 期间为 true：抑制 @Watch 的逐字段触发，改为末尾统一重建一次
+  private dateFilterApplying: boolean = false
   @Provide('editWalletId') editWalletId: string = ''
   @Provide('budgets') @Watch('onBudgetsChanged') budgets: Budget[] = []
   @Provide('subscriptions') @Watch('onSubscriptionsChanged') subscriptions: Subscription[] = []
@@ -111,6 +119,33 @@ struct Index {
     if (this.dataLoaded) {
       this.rebuildMonthlyCaches()
     }
+  }
+
+  /**
+   * 明细侧筛选（类型/分类/钱包/平台）或日期范围变化。
+   * 这些都是日历月度缓存的依赖，必须重建，否则日历Tab图表与实际筛选不一致。
+   * 均为点击类离散操作，直接同步重建即可。
+   */
+  onFilterCriteriaChanged(): void {
+    if (this.dateFilterApplying) { return }
+    this.rebuildMonthlyCaches()
+  }
+
+  /**
+   * 搜索词逐字符变化（onChange 每敲一个字触发一次）。
+   * rebuildMonthlyCaches() 会跑 4 个 compute、每次都做一次完整过滤+搜索扫描，
+   * 逐字符直接重建在大数据量下会明显卡顿，故做 250ms 防抖合并。
+   * 防抖只推迟重建、不缓存中间结果，因此不会引入陈旧数据：
+   * 定时器必然以最新 searchKeyword 重新计算。
+   */
+  onSearchKeywordChanged(): void {
+    if (this.searchDebounceTimer !== -1) {
+      clearTimeout(this.searchDebounceTimer)
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.searchDebounceTimer = -1
+      this.rebuildMonthlyCaches()
+    }, 250)
   }
 
   onUIStyleChanged(): void {
@@ -1672,10 +1707,11 @@ struct Index {
 
   /** 应用临时选择为正式筛选条件，然后返回上一页 */
   private applyDateFilter(): void {
+    // 两个字段的 @Watch 会各触发一次；用标志位抑制，末尾统一重建一次
+    this.dateFilterApplying = true
     this.filterStartDate = this.tempStartDate
     this.filterEndDate = this.tempEndDate
-    // 日历页的格子/月度支出/饼图/柱图均走 getFilteredTransactions()，
-    // 因此筛选条件变化后必须重建月度缓存才会生效。
+    this.dateFilterApplying = false
     this.rebuildMonthlyCaches()
     this.navStack.pop()
   }
