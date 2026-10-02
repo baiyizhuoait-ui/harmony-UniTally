@@ -2,6 +2,8 @@
  * 平台模型
  * 用于标记交易来源平台（支付宝、微信等）
  */
+import { getTranslation, getCurrentLanguage } from '../constants/I18n'
+
 @Observed
 export class Platform {
   id: string = ''
@@ -33,6 +35,21 @@ export class Platform {
       'order': this.order
     }
   }
+
+  static getLocalizedName(key: string): string {
+    const t = getTranslation(getCurrentLanguage())
+    const nameMap: Map<string, string> = new Map([
+      ['plat_alipay', t.platAlipay],
+      ['plat_wechat', t.platWechat],
+      ['plat_jd', t.platJD],
+      ['plat_meituan', t.platMeituan],
+      ['plat_douyin', t.platDouyin],
+      ['plat_taobao', t.platTaobao],
+      ['plat_pdd', t.platPDD],
+      ['plat_other', t.platOther]
+    ])
+    return nameMap.get(key) ?? key
+  }
 }
 
 /**
@@ -53,14 +70,19 @@ export function createPlatformFromJson(json: Record<string, Object>): Platform {
   return plat
 }
 
-// 默认平台列表
-export const DEFAULT_PLATFORMS: Platform[] = [
-  new Platform('plat_alipay', '支付宝', '📱', '#1677FF', 0),
-  new Platform('plat_wechat', '微信支付', '💬', '#07C160', 1),
-  new Platform('plat_jd', '京东', '🛒', '#E2231A', 2),
-  new Platform('plat_meituan', '美团', '🍜', '#FFD100', 3),
-  new Platform('plat_douyin', '抖音', '🎵', '#161823', 4),
-  new Platform('plat_taobao', '淘宝', '🛍️', '#FF5000', 5),
-  new Platform('plat_pdd', '拼多多', '🏷️', '#E02E24', 6),
-  new Platform('plat_other', '其他', '📌', '#78909C', 7)
-]
+// Get default platforms with localized names (called at display time)
+export function getDefaultPlatforms(): Platform[] {
+  return [
+    new Platform('plat_alipay', Platform.getLocalizedName('plat_alipay'), '📱', '#1677FF', 0),
+    new Platform('plat_wechat', Platform.getLocalizedName('plat_wechat'), '💬', '#07C160', 1),
+    new Platform('plat_jd', Platform.getLocalizedName('plat_jd'), '🛒', '#E2231A', 2),
+    new Platform('plat_meituan', Platform.getLocalizedName('plat_meituan'), '🍜', '#FFD100', 3),
+    new Platform('plat_douyin', Platform.getLocalizedName('plat_douyin'), '🎵', '#161823', 4),
+    new Platform('plat_taobao', Platform.getLocalizedName('plat_taobao'), '🛍️', '#FF5000', 5),
+    new Platform('plat_pdd', Platform.getLocalizedName('plat_pdd'), '🏷️', '#E02E24', 6),
+    new Platform('plat_other', Platform.getLocalizedName('plat_other'), '📌', '#78909C', 7)
+  ]
+}
+
+// Legacy static array for backward compatibility
+export const DEFAULT_PLATFORMS: Platform[] = getDefaultPlatforms()

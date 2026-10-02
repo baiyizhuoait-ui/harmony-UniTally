@@ -1,9 +1,10 @@
 /**
- * 货币常量定义
- * 包含货币符号、默认颜色、钱包颜色映射
+ * Currency constants
+ * Currency symbols, default colors, wallet color mappings
  */
+import { getTranslation, getCurrentLanguage } from './I18n'
 
-// 货币基础信息
+// Currency info
 export class CurrencyInfo {
   code: string = ''
   symbol: string = ''
@@ -11,128 +12,110 @@ export class CurrencyInfo {
   defaultColor: string = ''
 }
 
-// 支持的货币列表
-export const CURRENCY_LIST: CurrencyInfo[] = []
+// Currency code -> color mapping (static, language-independent)
+export const CurrencyColorMap: Map<string, string> = new Map([
+  ['CNY', '#E53935'],
+  ['USD', '#43A047'],
+  ['EUR', '#1E88E5'],
+  ['GBP', '#6D4C41'],
+  ['JPY', '#F4511E'],
+  ['KRW', '#5E35B1'],
+  ['HKD', '#FDD835'],
+  ['TWD', '#00897B'],
+  ['SGD', '#D81B60'],
+  ['AUD', '#00ACC1'],
+  ['CAD', '#F57C00'],
+  ['CHF', '#546E7A']
+])
 
-function initCurrencyList(): void {
-  let item: CurrencyInfo
+// Currency code -> symbol mapping (static, language-independent)
+export const CurrencySymbolMap: Map<string, string> = new Map([
+  ['CNY', '¥'],
+  ['USD', '$'],
+  ['EUR', '€'],
+  ['GBP', '£'],
+  ['JPY', '¥'],
+  ['KRW', '₩'],
+  ['HKD', 'HK$'],
+  ['TWD', 'NT$'],
+  ['SGD', 'S$'],
+  ['AUD', 'A$'],
+  ['CAD', 'C$'],
+  ['CHF', 'CHF']
+])
 
-  item = new CurrencyInfo()
-  item.code = 'CNY'
-  item.symbol = '¥'
-  item.name = '人民币'
-  item.defaultColor = '#E53935'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'USD'
-  item.symbol = '$'
-  item.name = '美元'
-  item.defaultColor = '#43A047'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'EUR'
-  item.symbol = '€'
-  item.name = '欧元'
-  item.defaultColor = '#1E88E5'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'GBP'
-  item.symbol = '£'
-  item.name = '英镑'
-  item.defaultColor = '#6D4C41'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'JPY'
-  item.symbol = '¥'
-  item.name = '日元'
-  item.defaultColor = '#F4511E'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'KRW'
-  item.symbol = '₩'
-  item.name = '韩元'
-  item.defaultColor = '#5E35B1'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'HKD'
-  item.symbol = 'HK$'
-  item.name = '港币'
-  item.defaultColor = '#FDD835'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'TWD'
-  item.symbol = 'NT$'
-  item.name = '新台币'
-  item.defaultColor = '#00897B'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'SGD'
-  item.symbol = 'S$'
-  item.name = '新加坡元'
-  item.defaultColor = '#D81B60'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'AUD'
-  item.symbol = 'A$'
-  item.name = '澳元'
-  item.defaultColor = '#00ACC1'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'CAD'
-  item.symbol = 'C$'
-  item.name = '加元'
-  item.defaultColor = '#F57C00'
-  CURRENCY_LIST.push(item)
-
-  item = new CurrencyInfo()
-  item.code = 'CHF'
-  item.symbol = 'CHF'
-  item.name = '瑞士法郎'
-  item.defaultColor = '#546E7A'
-  CURRENCY_LIST.push(item)
+// Get localized currency name by code
+export function getCurrencyLocalizedName(code: string): string {
+  const t = getTranslation(getCurrentLanguage())
+  const nameMap: Map<string, string> = new Map([
+    ['CNY', t.curCNY],
+    ['USD', t.curUSD],
+    ['EUR', t.curEUR],
+    ['GBP', t.curGBP],
+    ['JPY', t.curJPY],
+    ['KRW', t.curKRW],
+    ['HKD', t.curHKD],
+    ['TWD', t.curTWD],
+    ['SGD', t.curSGD],
+    ['AUD', t.curAUD],
+    ['CAD', t.curCAD],
+    ['CHF', t.curCHF]
+  ])
+  return nameMap.get(code) ?? code
 }
 
-initCurrencyList()
-
-// 货币代码 -> 颜色映射（用于自动分配钱包颜色）
-export const CurrencyColorMap: Map<string, string> = new Map()
-for (let i = 0; i < CURRENCY_LIST.length; i++) {
-  CurrencyColorMap.set(CURRENCY_LIST[i].code, CURRENCY_LIST[i].defaultColor)
+// Get currency list with localized names (called at display time, not cached)
+export function getCurrencyList(): CurrencyInfo[] {
+  const codes: string[][] = [
+    ['CNY', '¥', '#E53935'],
+    ['USD', '$', '#43A047'],
+    ['EUR', '€', '#1E88E5'],
+    ['GBP', '£', '#6D4C41'],
+    ['JPY', '¥', '#F4511E'],
+    ['KRW', '₩', '#5E35B1'],
+    ['HKD', 'HK$', '#FDD835'],
+    ['TWD', 'NT$', '#00897B'],
+    ['SGD', 'S$', '#D81B60'],
+    ['AUD', 'A$', '#00ACC1'],
+    ['CAD', 'C$', '#F57C00'],
+    ['CHF', 'CHF', '#546E7A']
+  ]
+  const result: CurrencyInfo[] = []
+  for (let i = 0; i < codes.length; i++) {
+    const item = new CurrencyInfo()
+    item.code = codes[i][0]
+    item.symbol = codes[i][1]
+    item.defaultColor = codes[i][2]
+    item.name = getCurrencyLocalizedName(item.code)
+    result.push(item)
+  }
+  return result
 }
 
-// 货币代码 -> 符号映射
-export const CurrencySymbolMap: Map<string, string> = new Map()
-for (let i = 0; i < CURRENCY_LIST.length; i++) {
-  CurrencySymbolMap.set(CURRENCY_LIST[i].code, CURRENCY_LIST[i].symbol)
+// Legacy static list for backward compatibility (initialized once)
+export const CURRENCY_LIST: CurrencyInfo[] = getCurrencyList()
+
+// Get currency name map with localized names (called at display time)
+export function getCurrencyNameMap(): Map<string, string> {
+  const map: Map<string, string> = new Map()
+  const codes: string[] = ['CNY', 'USD', 'EUR', 'GBP', 'JPY', 'KRW', 'HKD', 'TWD', 'SGD', 'AUD', 'CAD', 'CHF']
+  for (let i = 0; i < codes.length; i++) {
+    map.set(codes[i], getCurrencyLocalizedName(codes[i]))
+  }
+  return map
 }
 
-// 货币代码 -> 名称映射
-export const CurrencyNameMap: Map<string, string> = new Map()
-for (let i = 0; i < CURRENCY_LIST.length; i++) {
-  CurrencyNameMap.set(CURRENCY_LIST[i].code, CURRENCY_LIST[i].name)
-}
-
-// 根据货币代码获取默认钱包颜色
+// Get default wallet color by currency code
 export function getCurrencyColor(currencyCode: string): string {
   return CurrencyColorMap.get(currencyCode) ?? '#607D8B'
 }
 
-// 根据货币代码获取符号
+// Get currency symbol by code
 export function getCurrencySymbol(currencyCode: string): string {
   return CurrencySymbolMap.get(currencyCode) ?? currencyCode
 }
 
-// 钱包类型枚举
+// Wallet type enum
 export enum WalletType {
   Cash = 'cash',
   Savings = 'savings',
@@ -140,15 +123,19 @@ export enum WalletType {
   EWallet = 'ewallet'
 }
 
-// 钱包类型显示名称
-export const WalletTypeLabel: Map<string, string> = new Map([
-  [WalletType.Cash, '现金'],
-  [WalletType.Savings, '储蓄'],
-  [WalletType.Credit, '信用卡'],
-  [WalletType.EWallet, '电子钱包']
-])
+// Get localized wallet type label (called at display time)
+export function getWalletTypeLabel(type: string): string {
+  const t = getTranslation(getCurrentLanguage())
+  const map: Map<string, string> = new Map([
+    [WalletType.Cash, t.walletTypeCash],
+    [WalletType.Savings, t.walletTypeSavings],
+    [WalletType.Credit, t.walletTypeCredit],
+    [WalletType.EWallet, t.walletTypeEWallet]
+  ])
+  return map.get(type) ?? type
+}
 
-// 钱包类型图标
+// Wallet type icons (static, language-independent)
 export const WalletTypeIcon: Map<string, string> = new Map([
   [WalletType.Cash, '💰'],
   [WalletType.Savings, '🏦'],
@@ -156,21 +143,25 @@ export const WalletTypeIcon: Map<string, string> = new Map([
   [WalletType.EWallet, '📱']
 ])
 
-// 交易类型枚举
+// Transaction type enum
 export enum TransactionType {
   Expense = 'expense',
   Income = 'income',
   Transfer = 'transfer'
 }
 
-// 交易类型显示名称
-export const TransactionTypeLabel: Map<string, string> = new Map([
-  [TransactionType.Expense, '支出'],
-  [TransactionType.Income, '收入'],
-  [TransactionType.Transfer, '转账']
-])
+// Get localized transaction type label (called at display time)
+export function getTransactionTypeLabel(type: string): string {
+  const t = getTranslation(getCurrentLanguage())
+  const map: Map<string, string> = new Map([
+    [TransactionType.Expense, t.txTypeExpense],
+    [TransactionType.Income, t.txTypeIncome],
+    [TransactionType.Transfer, t.txTypeTransfer]
+  ])
+  return map.get(type) ?? type
+}
 
-// 内置汇率表（以 USD 为基准）
+// Built-in exchange rates (USD as base)
 export const BUILTIN_RATES: Map<string, number> = new Map([
   ['USD', 1.0],
   ['CNY', 7.25],
@@ -193,11 +184,11 @@ export const BUILTIN_RATES: Map<string, number> = new Map([
 ])
 
 /**
- * 使用内置汇率进行货币转换
- * @param amount 金额
- * @param fromCurrency 源货币代码
- * @param toCurrency 目标货币代码
- * @returns 转换后的金额，未知币种返回原金额
+ * Convert currency using built-in rates
+ * @param amount Amount
+ * @param fromCurrency Source currency code
+ * @param toCurrency Target currency code
+ * @returns Converted amount, or original amount for unknown currencies
  */
 export function convertCurrency(amount: number, fromCurrency: string, toCurrency: string): number {
   if (fromCurrency === toCurrency) {
@@ -206,9 +197,8 @@ export function convertCurrency(amount: number, fromCurrency: string, toCurrency
   const fromRate = BUILTIN_RATES.get(fromCurrency)
   const toRate = BUILTIN_RATES.get(toCurrency)
   if (!fromRate || !toRate) {
-    return amount // 未知币种回退：返回原金额
+    return amount
   }
-  // 转换路径: fromCurrency -> USD -> toCurrency
   const usdAmount = amount / fromRate
   return usdAmount * toRate
 }

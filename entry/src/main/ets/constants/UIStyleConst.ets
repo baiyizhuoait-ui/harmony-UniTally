@@ -258,3 +258,103 @@ export const ChipInactiveMap: Map<string, string> = new Map([
   [UIStyle.Brutalism, BRUTALISM_SECONDARY],
   [UIStyle.Cyberpunk, CYBERPUNK_SECONDARY]
 ])
+
+// 主色浅底色（选中项背景）
+export const PrimaryBgMap: Map<string, string> = new Map([
+  [UIStyle.Minimalist, '#EBF2FF'],
+  [UIStyle.Neumorphism, '#C8D8F0'],
+  [UIStyle.Brutalism, '#FFF3B0'],
+  [UIStyle.Cyberpunk, '#2D1B5E']
+])
+
+// 弹窗遮罩层
+export const OverlayMap: Map<string, string> = new Map([
+  [UIStyle.Minimalist, 'rgba(0,0,0,0.4)'],
+  [UIStyle.Neumorphism, 'rgba(0,0,0,0.3)'],
+  [UIStyle.Brutalism, 'rgba(0,0,0,0.5)'],
+  [UIStyle.Cyberpunk, 'rgba(15,5,38,0.7)']
+])
+
+// 危险/欠款提示背景
+export const DangerBgMap: Map<string, string> = new Map([
+  [UIStyle.Minimalist, '#FFF5F5'],
+  [UIStyle.Neumorphism, '#E8D0D0'],
+  [UIStyle.Brutalism, '#FFD700'],
+  [UIStyle.Cyberpunk, '#2D0A2D']
+])
+
+// 主色前景半透明（渐变卡片上的副文字）
+export const PrimaryFgMutedMap: Map<string, string> = new Map([
+  [UIStyle.Minimalist, 'rgba(255,255,255,0.8)'],
+  [UIStyle.Neumorphism, 'rgba(255,255,255,0.8)'],
+  [UIStyle.Brutalism, 'rgba(13,13,13,0.7)'],
+  [UIStyle.Cyberpunk, 'rgba(240,230,255,0.8)']
+])
+
+// ==================== 卡片阴影参数 ====================
+// 阴影半径
+export const ShadowRadiusMap: Map<string, number> = new Map([
+  [UIStyle.Minimalist, 4],
+  [UIStyle.Neumorphism, 16],
+  [UIStyle.Brutalism, 0],
+  [UIStyle.Cyberpunk, 12]
+])
+// 阴影颜色
+export const ShadowColorMap: Map<string, string> = new Map([
+  [UIStyle.Minimalist, 'rgba(0,0,0,0.08)'],
+  [UIStyle.Neumorphism, 'rgba(0,0,0,0.15)'],
+  [UIStyle.Brutalism, 'rgba(0,0,0,1)'],
+  [UIStyle.Cyberpunk, 'rgba(204,0,255,0.4)']
+])
+// 阴影X偏移
+export const ShadowOffsetXMap: Map<string, number> = new Map([
+  [UIStyle.Minimalist, 0],
+  [UIStyle.Neumorphism, 8],
+  [UIStyle.Brutalism, 4],
+  [UIStyle.Cyberpunk, 0]
+])
+// 阴影Y偏移
+export const ShadowOffsetYMap: Map<string, number> = new Map([
+  [UIStyle.Minimalist, 2],
+  [UIStyle.Neumorphism, 8],
+  [UIStyle.Brutalism, 4],
+  [UIStyle.Cyberpunk, 0]
+])
+// 新拟态亮面阴影颜色
+export const ShadowLightColorMap: Map<string, string> = new Map([
+  [UIStyle.Minimalist, 'rgba(0,0,0,0)'],
+  [UIStyle.Neumorphism, 'rgba(255,255,255,0.7)'],
+  [UIStyle.Brutalism, 'rgba(0,0,0,0)'],
+  [UIStyle.Cyberpunk, 'rgba(0,0,0,0)']
+])
+
+// ==================== 卡片边框参数 ====================
+// 边框宽度
+export const BorderWidthMap: Map<string, number> = new Map([
+  [UIStyle.Minimalist, 0.5],
+  [UIStyle.Neumorphism, 0],
+  [UIStyle.Brutalism, 3],
+  [UIStyle.Cyberpunk, 1]
+])
+// 边框颜色
+export const BorderColorMap: Map<string, string> = new Map([
+  [UIStyle.Minimalist, '#E5E5E5'],
+  [UIStyle.Neumorphism, 'transparent'],
+  [UIStyle.Brutalism, '#0D0D0D'],
+  [UIStyle.Cyberpunk, '#9333EA']
+])
+// 赛博朋克发光边框颜色（用于 box-shadow 模拟）
+export const GlowBorderColorMap: Map<string, string> = new Map([
+  [UIStyle.Minimalist, 'rgba(0,0,0,0)'],
+  [UIStyle.Neumorphism, 'rgba(0,0,0,0)'],
+  [UIStyle.Brutalism, 'rgba(0,0,0,0)'],
+  [UIStyle.Cyberpunk, 'rgba(147,51,234,0.3)']
+])
+
+// 净资产卡片渐变终止色
+export const GradientEndMap: Map<string, string> = new Map([
+  [UIStyle.Minimalist, '#8B5CF6'],
+  [UIStyle.Neumorphism, '#7C3AED'],
+  [UIStyle.Brutalism, '#F59E0B'],
+  [UIStyle.Cyberpunk, '#00FFCC']
+])
