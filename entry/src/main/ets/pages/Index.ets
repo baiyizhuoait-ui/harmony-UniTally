@@ -406,7 +406,7 @@ struct Index {
     } else if (name === 'Settings') {
       SettingsPage()
     } else if (name === 'DateFilter') {
-      DateFilterPage()
+      this.DateFilterPage()
     }
   }
 
@@ -1415,8 +1415,9 @@ struct Index {
   private computeMonthExpense(): number {
     let total = 0
     const monthPrefix = `${this.calendarYear}-${String(this.calendarMonth).padStart(2, '0')}`
-    for (let i = 0; i < this.transactions.length; i++) {
-      const tx = this.transactions[i]
+    const source = this.getFilteredTransactions()
+    for (let i = 0; i < source.length; i++) {
+      const tx = source[i]
       if (tx.type === TransactionType.Expense && this.getDateStr(tx.datetime).indexOf(monthPrefix) === 0) {
         total += tx.amount
       }
@@ -1431,6 +1432,7 @@ struct Index {
     const startWeekday = firstDay.getDay() // 0=周日
     const daysInMonth = new Date(this.calendarYear, this.calendarMonth, 0).getDate()
     const todayStr = this.getDateStr(Date.now())
+    const source = this.getFilteredTransactions()
 
     // 前置空白
     for (let i = 0; i < startWeekday; i++) {
@@ -1441,8 +1443,8 @@ struct Index {
     for (let d = 1; d <= daysInMonth; d++) {
       const dateKey = this.getCellDateKey(d)
       let expense = 0
-      for (let i = 0; i < this.transactions.length; i++) {
-        const tx = this.transactions[i]
+      for (let i = 0; i < source.length; i++) {
+        const tx = source[i]
         if (tx.type === TransactionType.Expense && this.getDateStr(tx.datetime) === dateKey) {
           expense += tx.amount
         }
@@ -1465,8 +1467,9 @@ struct Index {
   private getSelectedDayTransactions(): Transaction[] {
     if (this.selectedDate === '') { return [] }
     const result: Transaction[] = []
-    for (let i = 0; i < this.transactions.length; i++) {
-      const tx = this.transactions[i]
+    const source = this.getFilteredTransactions()
+    for (let i = 0; i < source.length; i++) {
+      const tx = source[i]
       if (this.getDateStr(tx.datetime) === this.selectedDate) {
         result.push(tx)
       }
@@ -1480,8 +1483,9 @@ struct Index {
   private computeMonthCategoryData(): PieChartData[] {
     const monthPrefix = `${this.calendarYear}-${String(this.calendarMonth).padStart(2, '0')}`
     const map: Map<string, number> = new Map()
-    for (let i = 0; i < this.transactions.length; i++) {
-      const tx = this.transactions[i]
+    const source = this.getFilteredTransactions()
+    for (let i = 0; i < source.length; i++) {
+      const tx = source[i]
       if (tx.type !== TransactionType.Expense) { continue }
       if (this.getDateStr(tx.datetime).indexOf(monthPrefix) !== 0) { continue }
       const existing = map.get(tx.category)
@@ -1523,8 +1527,9 @@ struct Index {
     for (let d = 1; d <= daysInMonth; d++) {
       dailyMap.set(d, 0)
     }
-    for (let i = 0; i < this.transactions.length; i++) {
-      const tx = this.transactions[i]
+    const source = this.getFilteredTransactions()
+    for (let i = 0; i < source.length; i++) {
+      const tx = source[i]
       if (tx.type !== TransactionType.Expense) { continue }
       const dateStr = this.getDateStr(tx.datetime)
       if (dateStr.indexOf(monthPrefix) !== 0) { continue }
@@ -1669,6 +1674,9 @@ struct Index {
   private applyDateFilter(): void {
     this.filterStartDate = this.tempStartDate
     this.filterEndDate = this.tempEndDate
+    // 日历页的格子/月度支出/饼图/柱图均走 getFilteredTransactions()，
+    // 因此筛选条件变化后必须重建月度缓存才会生效。
+    this.rebuildMonthlyCaches()
     this.navStack.pop()
   }
 
